@@ -9,7 +9,7 @@
 ## 기본 정보
 | 항목 | 내용 |
 |---|---|
-| 로컬 경로 | `/Users/scrowna/Desktop/web/polarbear calculator` |
+| 로컬 경로 | `/Users/scrowna/Desktop/web/polarbear_calculator` |
 | GitHub | https://github.com/swa44/polarbear_calculator |
 | 원본 소스 | `/Users/scrowna/Desktop/web/oox/root` |
 | 배포 | Vercel (`basePath: /calculator`) |
