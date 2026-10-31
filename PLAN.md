@@ -25,12 +25,15 @@
 ---
 
 ## Phase 0. 프로젝트 세팅
-- [ ] Next.js 생성 (App Router, TypeScript, Tailwind, ESLint)
-- [ ] `next.config.ts`에 `basePath: '/calculator'` 설정
-- [ ] git init 후 `swa44/polarbear_calculator`에 연결하고 첫 push
+- [x] Next.js 생성 (App Router, TypeScript, Tailwind, ESLint) — Next 16.4
+- [x] `next.config.ts`에 `basePath: '/calculator'` 설정
+- [x] git init 후 `swa44/polarbear_calculator`에 연결 (첫 push는 아직)
 - [ ] Vercel 프로젝트 연결 (push하면 자동 배포)
 - [ ] Supabase 프로젝트 생성, 환경변수 등록 (`.env.local` + Vercel)
-- [ ] `.env.example` 작성
+- [x] `.env.example` 작성
+
+> ⚠️ 로컬 폴더 경로에 공백(`polarbear calculator`)이 있으면 Turbopack의 Tailwind 로더가 실패해서 `next build`/`next dev`가 안 됨.
+> 폴더 이름을 `polarbear_calculator`로 바꾸는 게 좋음 (Vercel 빌드는 영향 없음)
 
 ## Phase 1. 구조 / 라우팅
 ```
@@ -62,6 +65,12 @@ public/                   이미지, 파비콘, logo.png
 4. 기존 사이트와 같은 값을 넣고 결과가 똑같은지 비교 검증
 
 진행 순서: `t5` → `t5nu` → `t3` → `12vbb` → `24vbb` → `mline`
+
+진행 상황:
+- [x] `t5`, `t5nu`: 공통 로직 `lib/calc/tube.ts` + UI `components/legacy/TubeCalculator.tsx`. 원본과 길이 4,572건 비교해서 결과 동일
+- [ ] `t3` (같은 tube 로직을 쓸 가능성이 높음. 차이 확인 필요)
+- [ ] `12vbb`, `24vbb`, `mline`
+- GA, AdSense는 아직 안 넣음 (결정 대기 4번)
 
 ### 공통 결과 형식 (초안)
 ```ts
