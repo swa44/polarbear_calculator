@@ -1,0 +1,288 @@
+/*
+ * 기존 oox 블럭바 계산기 스타일 (oox/root/12vbb/style.css, 24vbb 동일) 이식본.
+ * Phase 6 디자인 리뉴얼 전까지 사용. .legacy .bb 하위로 범위를 한정한다.
+ * legacy.css(T5 기준)와 겹치는 .controls/.result 등은 여기서 원본 값으로 덮어쓴다.
+ * 원본 .modal 은 legacy.css 의 .modal 과 충돌하므로 .bb-modal 로 이름을 바꿨다.
+ */
+.legacy .bb {
+  --modal-backdrop: rgba(0, 0, 0, 0.45);
+  --modal-bg: #ffffff;
+  --modal-border: #e5e7eb;
+  padding: 0 20px;
+}
+
+/* Tailwind preflight 보정: 브라우저 기본값 복원 */
+.legacy .bb h2 {
+  font-size: 1.5em;
+  font-weight: bold;
+  margin: 0.83em 0;
+}
+.legacy .bb fieldset {
+  margin: 0 2px;
+  min-inline-size: min-content;
+}
+.legacy .bb input[type="checkbox"] {
+  margin: 3px 3px 3px 4px;
+}
+
+/* 전체 가운데 정렬 컨테이너 */
+.legacy .bb .page {
+  width: 100%;
+  max-width: 820px;
+  margin: 0 auto;
+}
+.legacy .bb h1 {
+  margin: 0 0 10px;
+  text-align: center;
+}
+.legacy .bb .lead {
+  font-size: 1.05rem;
+  margin: 0 0 12px;
+}
+
+/* 컨트롤 영역 */
+.legacy .bb .controls {
+  display: grid;
+  grid-template-columns: minmax(90px, 140px) minmax(0, 1fr);
+  gap: 8px 12px;
+  align-items: center;
+  max-width: 720px;
+  margin: 0 auto;
+}
+.legacy .bb .controls .full {
+  grid-column: 1 / -1;
+}
+
+/* 버튼 변형 */
+.legacy .bb .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 14px;
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  background: #fafafa;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+}
+.legacy .bb .btn:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+.legacy .bb .btn:active {
+  transform: translateY(1px);
+}
+.legacy .bb .btn-primary {
+  background: #2f5bff;
+  color: #fff;
+  border-color: #2f5bff;
+}
+.legacy .bb .btn-full {
+  width: 100%;
+}
+
+/* 설치 방식 선택 버튼 (원본 #pickSerial, #pickParallel) */
+.legacy .bb .bb-pick {
+  background-color: white;
+  color: #333;
+  border: 0.1px solid #000000;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  transition:
+    background-color 0.3s,
+    color 0.3s;
+}
+.legacy .bb .bb-pick:hover {
+  background-color: #3b4cd2;
+  color: #fff;
+}
+
+/* 결과 카드 영역 */
+.legacy .bb .result {
+  margin: 20px auto 0;
+  width: 100%;
+  max-width: 720px;
+}
+.legacy .bb .total-line {
+  margin-top: 6px;
+  font-size: 1.05rem;
+}
+
+/* ==================== 체크박스 그룹 ==================== */
+.legacy .bb fieldset.checkbox-group {
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: #f9f9ff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  row-gap: 12px;
+  text-align: left;
+  width: 100%;
+}
+
+.legacy .bb label.checkbox-row {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  column-gap: 8px;
+  margin: 0;
+  user-select: none;
+  width: 100%;
+  max-width: 520px;
+}
+.legacy .bb label.checkbox-row input[type="checkbox"] {
+  margin: 0;
+}
+.legacy .bb label.checkbox-row strong {
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.4;
+}
+
+/* 썸네일(이미지) 포함 항목(카드형) */
+.legacy .bb .checkbox-row.with-thumb {
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 14px 14px 10px;
+  border: 1px solid #e5e8eb;
+  border-radius: 12px;
+  background: #fff;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+  text-align: left;
+}
+.legacy .bb .checkbox-row.with-thumb .row-top {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  column-gap: 10px;
+  padding-left: 10px;
+  padding-top: 2px;
+  margin-bottom: 4px;
+}
+.legacy .bb .acc-thumb {
+  width: 100%;
+  margin-top: -10px;
+  display: flex;
+  justify-content: center;
+}
+.legacy .bb .acc-thumb img {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+.legacy .bb .checkbox-row.with-thumb:hover {
+  border-color: #d7dce1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+/* 제품명+설명 가로 배치 */
+.legacy .bb .label-text {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.legacy .bb .label-text strong {
+  font-weight: 700;
+}
+
+/* 안내문 */
+.legacy .bb .hint {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 10px auto 0;
+  max-width: 720px;
+}
+
+/* ===== 모달 (원본 .modal.is-open) ===== */
+.legacy .bb-modal {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+}
+.legacy .bb-modal .modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: var(--modal-backdrop);
+}
+.legacy .bb-modal .modal__dialog {
+  position: relative;
+  width: calc(100% - 32px);
+  max-width: 520px;
+  background: var(--modal-bg);
+  border: 1px solid var(--modal-border);
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  padding: 12px 14px;
+  z-index: 2;
+}
+.legacy .bb-modal .modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed var(--modal-border);
+}
+.legacy .bb-modal .modal__body {
+  padding: 12px 2px;
+}
+.legacy .bb-modal .modal__footer {
+  display: flex;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--modal-border);
+}
+.legacy .bb-modal .modal__footer--stack {
+  flex-direction: column;
+}
+.legacy .bb-modal .modal__footer .btn {
+  width: 100%;
+}
+
+/* 반응형 */
+@media (max-width: 560px) {
+  .legacy .bb {
+    padding: 0 16px;
+  }
+  .legacy .bb .controls {
+    grid-template-columns: 1fr;
+    max-width: 100%;
+  }
+  .legacy .bb .controls label {
+    margin-top: 6px;
+  }
+  .legacy .bb .card {
+    padding: 12px 14px;
+  }
+  .legacy .bb .result,
+  .legacy .bb .hint {
+    max-width: 100%;
+  }
+  .legacy .bb .checkbox-row.with-thumb,
+  .legacy .bb label.checkbox-row {
+    max-width: 100%;
+  }
+}

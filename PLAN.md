@@ -32,8 +32,7 @@
 - [ ] Supabase 프로젝트 생성, 환경변수 등록 (`.env.local` + Vercel)
 - [x] `.env.example` 작성
 
-> ⚠️ 로컬 폴더 경로에 공백(`polarbear calculator`)이 있으면 Turbopack의 Tailwind 로더가 실패해서 `next build`/`next dev`가 안 됨.
-> 폴더 이름을 `polarbear_calculator`로 바꾸는 게 좋음 (Vercel 빌드는 영향 없음)
+> 로컬 폴더명을 `polarbear_calculator`로 변경함 (경로 공백 때문에 Turbopack Tailwind 로더가 실패했음)
 
 ## Phase 1. 구조 / 라우팅
 ```
@@ -67,9 +66,11 @@ public/                   이미지, 파비콘, logo.png
 진행 순서: `t5` → `t5nu` → `t3` → `12vbb` → `24vbb` → `mline`
 
 진행 상황:
-- [x] `t5`, `t5nu`: 공통 로직 `lib/calc/tube.ts` + UI `components/legacy/TubeCalculator.tsx`. 원본과 길이 4,572건 비교해서 결과 동일
-- [ ] `t3` (같은 tube 로직을 쓸 가능성이 높음. 차이 확인 필요)
-- [ ] `12vbb`, `24vbb`, `mline`
+- [x] `t5`, `t5nu`, `t3`: 공통 로직 `lib/calc/tube.ts` + UI `components/legacy/TubeCalculator.tsx`. 원본과 6,858건 비교 결과 동일
+- [x] `12vbb`, `24vbb`: `lib/calc/blockbar.ts` + `BlockBarCalculator.tsx`. 원본과 371,984건 비교 결과 동일
+- [x] `mline`: `lib/calc/mline.ts` + `MlineCalculator.tsx`. 원본과 119,721건 비교 결과 동일
+- 원본의 오타/어색한 동작(12V "고정클림", 24V 클립 0개 줄 표시 등)은 일단 그대로 유지. 디자인 리뉴얼 때 정리
+- 장바구니 sku는 임시 규칙 (`bb12-1000`, `mline-40-line-1000` 등). Phase 3에서 확정
 - GA, AdSense는 아직 안 넣음 (결정 대기 4번)
 
 ### 공통 결과 형식 (초안)
