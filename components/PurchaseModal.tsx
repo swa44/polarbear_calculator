@@ -103,7 +103,7 @@ export default function PurchaseModal({
                 {addons.map((a) => {
                   const q = addonQty[a.sku] ?? 0;
                   return (
-                    <div className="addon-row" key={a.sku}>
+                    <div className={`addon-row ${q > 0 ? "active" : ""}`} key={a.sku}>
                       <div>
                         <div className="addon-name">{a.name}</div>
                         <div className="addon-price">{won(a.unitPrice)}</div>

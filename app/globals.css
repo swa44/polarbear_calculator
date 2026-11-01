@@ -12,6 +12,11 @@
   --border-strong: #d1d5db;
   --primary: #111111;
   --primary-hover: #2b2b2b;
+  /* 선택된 항목 (연한 초록) */
+  --selected-bg: #ecfdf3;
+  --selected-border: #10b981;
+  --selected-line: #a7f3d0;
+  --selected-text: #047857;
   --warn-bg: #fffbeb;
   --warn-border: #fde68a;
   --warn-text: #92400e;
@@ -374,12 +379,12 @@ input[type="number"].input {
   background: var(--surface-2);
 }
 .btn-change {
-  background: #ecfdf3;
-  color: #047857;
-  border: 1px solid #a7f3d0;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
 }
 .btn-change:hover {
-  background: #d1fae5;
+  background: #dbeafe;
 }
 .btn-sm {
   height: 42px;
@@ -418,8 +423,9 @@ input[type="number"].input {
   border-color: var(--border-strong);
 }
 .option-card:has(input:checked) {
-  border-color: var(--primary);
-  box-shadow: inset 0 0 0 1px var(--primary);
+  background: var(--selected-bg);
+  border-color: var(--selected-border);
+  box-shadow: inset 0 0 0 1px var(--selected-border);
 }
 .option-card:has(input:disabled) {
   opacity: 0.45;
@@ -434,7 +440,7 @@ input[type="number"].input {
   flex: none;
   width: 20px;
   height: 20px;
-  accent-color: var(--primary);
+  accent-color: var(--selected-border);
 }
 .label-text {
   display: flex;
@@ -739,9 +745,9 @@ input[type="number"].input {
 .combo-selected {
   margin-top: 10px;
   padding: 14px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--selected-line);
   border-radius: var(--radius-sm);
-  background: var(--surface-2);
+  background: var(--selected-bg);
 }
 .combo-head {
   display: flex;
@@ -836,6 +842,7 @@ input[type="number"].input {
 .modal-body {
   padding: 14px 16px 20px;
   overflow-y: auto;
+  overscroll-behavior: contain;
 }
 .modal-option {
   margin-bottom: 8px;
@@ -852,8 +859,9 @@ input[type="number"].input {
   background: var(--surface-2);
 }
 .modal-option.active {
-  border-color: var(--primary);
-  box-shadow: inset 0 0 0 1px var(--primary);
+  background: var(--selected-bg);
+  border-color: var(--selected-border);
+  box-shadow: inset 0 0 0 1px var(--selected-border);
 }
 
 /* 구매하러 가기 확인창 */
@@ -913,8 +921,12 @@ input[type="number"].input {
   border-color: var(--border-strong);
 }
 .color-option.active {
-  border-color: var(--primary);
-  box-shadow: inset 0 0 0 1px var(--primary);
+  background: var(--selected-bg);
+  border-color: var(--selected-border);
+  box-shadow: inset 0 0 0 1px var(--selected-border);
+}
+.color-option.active .color-desc {
+  color: var(--selected-text);
 }
 .color-name {
   font-size: 15px;
@@ -932,6 +944,7 @@ input[type="number"].input {
 .addon-list {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
+  overflow: hidden;
 }
 .addon-row {
   display: flex;
@@ -942,6 +955,15 @@ input[type="number"].input {
 }
 .addon-row + .addon-row {
   border-top: 1px solid #f0f1f3;
+}
+.addon-row.active {
+  background: var(--selected-bg);
+}
+.addon-row.active .addon-price {
+  color: var(--selected-text);
+}
+.addon-row.active .stepper {
+  border-color: var(--selected-line);
 }
 .addon-name {
   font-size: 15px;
@@ -959,6 +981,8 @@ input[type="number"].input {
   overflow: hidden;
 }
 .stepper button {
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
   width: 38px;
   height: 36px;
   font-size: 18px;

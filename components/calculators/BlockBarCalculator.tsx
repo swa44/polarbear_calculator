@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
-import ResultSheet from "@/components/ResultSheet";
+import ResultSheet, { useScrollLock } from "@/components/ResultSheet";
 import BlockBarResult from "./BlockBarResult";
 import { ChevronRight, PageHead } from "@/components/ui";
 import {
@@ -49,6 +49,7 @@ function BlockBarCalculatorInner({
   const [corner, setCorner] = useState(false);
   const [result, setResult] = useState<BlockBarCalc | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  useScrollLock(modalOpen);
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const chooseConnection = (c: Connection) => {
