@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { asset } from "@/lib/basePath";
+import ServiceWorker from "@/components/ServiceWorker";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -9,6 +10,12 @@ export const metadata: Metadata = {
     template: "%s | 폴라베어 자동계산기",
   },
   description: "주식회사 폴라베어 제작 및 배포",
+  applicationName: "폴라베어 자동계산기",
+  appleWebApp: { capable: true, title: "폴라베어 계산기", statusBarStyle: "default" },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#ffffff",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -42,6 +49,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <p>&copy; (주)폴라베어. All rights reserved.</p>
           <p>본 계산 결과는 참고용이며 실제 시공 환경에 따라 다를 수 있습니다.</p>
         </footer>
+        <ServiceWorker />
       </body>
     </html>
   );
