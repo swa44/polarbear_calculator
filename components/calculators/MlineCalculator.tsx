@@ -14,6 +14,7 @@ import {
   type Spec,
   type WireType,
 } from "@/lib/calc/mline";
+import { hideKeyboard } from "@/lib/hideKeyboard";
 import ResultSheet from "@/components/ResultSheet";
 import type { CartLine } from "@/lib/calc/types";
 import type { Cafe24Map } from "@/lib/products";
@@ -51,6 +52,7 @@ function MlineCalculatorInner({ prices, cafe24 }: Props) {
 
   // ===== 계산하기 =====
   const doCalculate = () => {
+    hideKeyboard();
     const r = calculate({
       connectionType,
       spec: spec || null,

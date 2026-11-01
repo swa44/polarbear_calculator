@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { hideKeyboard } from "@/lib/hideKeyboard";
 import ResultSheet, { useScrollLock } from "@/components/ResultSheet";
 import { ChevronRight, PageHead } from "@/components/ui";
 import type { Addon, Cafe24Map } from "@/lib/products";
@@ -71,6 +72,7 @@ function TubeCalculatorInner({ title, product, intro, cafe24, addons }: Props) {
   };
 
   const onCalculate = () => {
+    hideKeyboard();
     if (!type) return;
     const lengths = inputs.map((v) => {
       const n = parseInt(v.replace(/,/g, ""), 10);

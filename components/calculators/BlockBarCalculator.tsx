@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
+import { hideKeyboard } from "@/lib/hideKeyboard";
 import ResultSheet, { useScrollLock } from "@/components/ResultSheet";
 import BlockBarResult from "./BlockBarResult";
 import { ChevronRight, PageHead } from "@/components/ui";
@@ -58,6 +59,7 @@ function BlockBarCalculatorInner({
   };
 
   const onCalculate = () => {
+    hideKeyboard();
     if (!connection) {
       alert("먼저 연결 방식을 선택해주세요. (직렬연결 또는 병렬연결)");
       return;
