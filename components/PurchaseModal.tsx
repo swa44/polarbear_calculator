@@ -13,12 +13,15 @@ export default function PurchaseModal({
   lines,
   map,
   addons = [],
+  colorDesc,
   onClose,
 }: {
   lines: CartLine[];
   map: Cafe24Map;
   /** 함께 담을 수 있는 추가 품목 (양방향 연결잭 등), 수량은 여기서 고른다 */
   addons?: Addon[];
+  /** 제품별 색온도 설명 (예: T5·T3·매립라인 주광색 6500K) */
+  colorDesc?: Record<string, string>;
   onClose: () => void;
 }) {
   useScrollLock(true);
@@ -83,7 +86,7 @@ export default function PurchaseModal({
                     onClick={() => setColor(c)}
                   >
                     <span className="color-name">{c}</span>
-                    <span className="color-desc">{COLOR_DESC[c]}</span>
+                    <span className="color-desc">{colorDesc?.[c] ?? COLOR_DESC[c]}</span>
                   </button>
                 ))}
               </div>

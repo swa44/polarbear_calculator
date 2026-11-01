@@ -17,6 +17,9 @@ export const COLOR_DESC: Record<string, string> = {
   주광색: "6000K · 밝고 푸른 흰빛",
 };
 
+/** 주광색이 6500K 인 제품 (T5·T3·매립라인) */
+export const COLOR_DESC_6500: Record<string, string> = { 주광색: "6500K · 밝고 푸른 흰빛" };
+
 /** 색온도가 있는 품목(조명)들이 공통으로 가진 색온도. 조명이 없으면 빈 배열 */
 export function availableColors(lines: CartLine[], map: Cafe24Map): string[] {
   const sets: string[][] = lines

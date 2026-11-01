@@ -14,7 +14,7 @@ type Props = {
   title?: string;
   children: ReactNode;
   /** 있으면 하단에 "구매하러 가기" 버튼 (카페24 매핑이 없으면 숨김) */
-  purchase?: { lines: CartLine[]; map: Cafe24Map; addons?: Addon[] };
+  purchase?: { lines: CartLine[]; map: Cafe24Map; addons?: Addon[]; colorDesc?: Record<string, string> };
 };
 
 /** 계산 결과 모달 (모바일: 아래에서 올라오는 시트, PC: 가운데 창) */
@@ -68,6 +68,7 @@ export default function ResultSheet({ open, onClose, title = "계산 결과", ch
           lines={purchase.lines}
           map={purchase.map}
           addons={purchase.addons}
+          colorDesc={purchase.colorDesc}
           onClose={() => setBuying(false)}
         />
       )}

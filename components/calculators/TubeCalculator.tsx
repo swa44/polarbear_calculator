@@ -19,6 +19,7 @@ import {
   type InstallType,
   type TubeProduct,
 } from "@/lib/calc/tube";
+import { COLOR_DESC_6500 } from "@/lib/cafe24";
 
 type Intro =
   | { kind: "youtube"; videoId: string }
@@ -192,7 +193,7 @@ function TubeCalculatorInner({ title, product, intro, cafe24, addons }: Props) {
       <ResultSheet
         open={sheetOpen && !!result?.ok}
         onClose={() => setSheetOpen(false)}
-        purchase={{ lines: totals ? countsToCartLines(product, totals.counts) : [], map: cafe24, addons }}
+        purchase={{ lines: totals ? countsToCartLines(product, totals.counts) : [], map: cafe24, addons, colorDesc: COLOR_DESC_6500 }}
       >
         <div className="result">
           {result?.ok && totals && (

@@ -19,6 +19,7 @@ import type { CartLine } from "@/lib/calc/types";
 import type { Cafe24Map } from "@/lib/products";
 import { KV, Section, SummaryCard } from "./ResultParts";
 import { ChevronRight, PageHead } from "@/components/ui";
+import { COLOR_DESC_6500 } from "@/lib/cafe24";
 
 const SAMPLE_IMAGES: Record<ConnectionType, string> = {
   serial: asset("/mline/sample-serial.jpg"),
@@ -246,7 +247,7 @@ function MlineCalculatorInner({ prices, cafe24 }: Props) {
       <ResultSheet
         open={sheetOpen && !!result}
         onClose={() => setSheetOpen(false)}
-        purchase={{ lines: result ? toCartLines(result, prices) : [], map: cafe24 }}
+        purchase={{ lines: result ? toCartLines(result, prices) : [], map: cafe24, colorDesc: COLOR_DESC_6500 }}
       >
         <div className="result">{result && <MlineResultView r={result} prices={prices} />}</div>
       </ResultSheet>
