@@ -54,7 +54,7 @@ function colorOf(label) {
 }
 
 // 계산기 sku → 카페24 상품번호 + 옵션명 조건
-const PRODUCTS = { namyoungT5: 259, namyoungT5Acc: 291, nubimT5: 251, t3: 254, bar12: 116, acc12: 184, smps12: 118, bar24: 167, acc24: 117, smps24: 185, mline: 120, mlineAcc: 121 };
+const PRODUCTS = { namyoungT5: 259, namyoungT5Acc: 291, nubimT5: 251, nubimT5Acc: 293, t3: 254, bar12: 116, acc12: 184, smps12: 118, bar24: 167, acc24: 117, smps24: 185, mline: 120, mlineAcc: 121 };
 const ACC = {
   "clip-screw": (s) => s.includes("고정클립(피스형)"),
   "clip-tape": (s) => s.includes("고정클립(양면테이프형)"),
@@ -68,7 +68,7 @@ function rule(sku) {
   // 양방향 연결잭 (구매 확인창 추가 품목)
   const JACK = { 30: "30cm", 60: "60cm", 120: "1.2M" };
   if ((m = sku.match(/^t5-namyoung-jack-(\d+)$/))) return [PRODUCTS.namyoungT5Acc, (s) => s === `양방향연결잭 ${JACK[m[1]]}`];
-  if ((m = sku.match(/^t5-nubim-jack-(\d+)$/))) return [PRODUCTS.nubimT5, (s) => s === `T5 양방향연결잭 ${JACK[m[1]]}`];
+  if ((m = sku.match(/^t5-nubim-jack-(\d+)$/))) return [PRODUCTS.nubimT5Acc, (s) => s === `양방향연결잭 ${JACK[m[1]]}`];
   if ((m = sku.match(/^t5-namyoung-(\d+)$/))) return [PRODUCTS.namyoungT5, (s) => s.includes(` ${m[1]}mm `) && !s.includes("코드")];
   if ((m = sku.match(/^t5-nubim-(\d+)$/))) return [PRODUCTS.nubimT5, (s) => s.startsWith(`${m[1]}mm `)];
   if ((m = sku.match(/^t3-(\d+)$/))) return [PRODUCTS.t3, (s) => s.startsWith(`${m[1]}mm `)];
