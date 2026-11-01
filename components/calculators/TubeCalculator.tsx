@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import ResultSheet, { useScrollLock } from "@/components/ResultSheet";
 import { ChevronRight, PageHead } from "@/components/ui";
-import type { Cafe24Map } from "@/lib/products";
+import type { Addon, Cafe24Map } from "@/lib/products";
 import { Section, SummaryCard, won } from "./ResultParts";
 import {
   calculate,
@@ -29,6 +29,8 @@ type Props = {
   product: TubeProduct;
   /** 카페24 옵션 매핑 (구매하러 가기) */
   cafe24: Cafe24Map;
+  /** 구매 확인창에서 고르는 추가 품목 (양방향 연결잭) */
+  addons?: Addon[];
   intro: Intro;
 };
 
@@ -44,7 +46,7 @@ function formatInput(v: string): string {
   return digits ? digits.replace(/\B(?=(\d{3})+(?!\d))/g, ",") : "";
 }
 
-function TubeCalculatorInner({ title, product, intro, cafe24 }: Props) {
+function TubeCalculatorInner({ title, product, intro, cafe24, addons }: Props) {
   const [type, setType] = useState<InstallType | null>(null);
   const [inputs, setInputs] = useState<string[]>([]);
   const [result, setResult] = useState<CalcResult | null>(null);
@@ -190,7 +192,7 @@ function TubeCalculatorInner({ title, product, intro, cafe24 }: Props) {
       <ResultSheet
         open={sheetOpen && !!result?.ok}
         onClose={() => setSheetOpen(false)}
-        purchase={{ lines: totals ? countsToCartLines(product, totals.counts) : [], map: cafe24 }}
+        purchase={{ lines: totals ? countsToCartLines(product, totals.counts) : [], map: cafe24, addons }}
       >
         <div className="result">
           {result?.ok && totals && (

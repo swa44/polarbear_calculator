@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import type { CartLine } from "@/lib/calc/types";
-import type { Cafe24Map } from "@/lib/products";
+import type { Addon, Cafe24Map } from "@/lib/products";
 import PurchaseModal from "./PurchaseModal";
 import { useScrollLock } from "./useScrollLock";
 
@@ -14,7 +14,7 @@ type Props = {
   title?: string;
   children: ReactNode;
   /** 있으면 하단에 "구매하러 가기" 버튼 (카페24 매핑이 없으면 숨김) */
-  purchase?: { lines: CartLine[]; map: Cafe24Map };
+  purchase?: { lines: CartLine[]; map: Cafe24Map; addons?: Addon[] };
 };
 
 /** 계산 결과 모달 (모바일: 아래에서 올라오는 시트, PC: 가운데 창) */
@@ -64,7 +64,12 @@ export default function ResultSheet({ open, onClose, title = "계산 결과", ch
         </div>
       </div>
       {buying && purchase && (
-        <PurchaseModal lines={purchase.lines} map={purchase.map} onClose={() => setBuying(false)} />
+        <PurchaseModal
+          lines={purchase.lines}
+          map={purchase.map}
+          addons={purchase.addons}
+          onClose={() => setBuying(false)}
+        />
       )}
     </div>
   );

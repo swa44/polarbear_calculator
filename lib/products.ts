@@ -70,6 +70,14 @@ export async function getCafe24Map(calculator: string): Promise<Cafe24Map> {
   }
 }
 
+/** 구매 확인창에서 고르는 추가 품목 (예: 양방향 연결잭) */
+export type Addon = { sku: string; name: string; unitPrice: number };
+
+/** DB 단가가 있는(0원 초과) 추가 품목만 */
+export function addonsFrom(prices: PriceMap, defs: { sku: string; name: string }[]): Addon[] {
+  return defs.filter((d) => (prices[d.sku] ?? 0) > 0).map((d) => ({ ...d, unitPrice: prices[d.sku] }));
+}
+
 const pick = (prices: PriceMap, sku: string, fallback: number) => prices[sku] ?? fallback;
 
 export function applyTubePrices(product: TubeProduct, prices: PriceMap): TubeProduct {

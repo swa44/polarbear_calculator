@@ -136,7 +136,7 @@ type CartLine = {
 - 사이드캡은 규격별 상품이라 `mline-40-sidecap`(1,000원) / `mline-60-sidecap`(1,600원)으로 분리
 
 ### 남은 것
-- [ ] Vercel 배포 후 실제 주소에서 한 번 더 확인
+- [x] Vercel 배포 후 실제 주소에서 확인 완료
 - [ ] 자사몰 상품을 새로 추가·삭제하면 `sync-cafe24.mjs`의 연결 규칙(상품번호) 수정 필요
 
 ## Phase 5. 도메인 / 배포
@@ -153,8 +153,8 @@ Vercel 환경변수 (공개용 값만)
 | `NEXT_PUBLIC_CAFE24_MALL_URL` | `https://polarbearmarket.com` |
 
 - [x] 도메인 구조 확정, DNS 연결
-- [ ] GitHub push → Vercel 배포, 도메인 추가
-- [ ] 배포 주소에서 6개 계산기 + 장바구니 연동 점검
+- [x] GitHub push → Vercel 배포, 도메인 추가 (2026-11-01)
+- [x] 배포 주소에서 6개 계산기 + 장바구니 연동 점검 (실제 자사몰 장바구니 금액 일치)
 - [ ] 기존 oox 사이트 처리 (새 주소로 리다이렉트할지, 그대로 둘지)
 
 ## Phase 6. 디자인 리뉴얼

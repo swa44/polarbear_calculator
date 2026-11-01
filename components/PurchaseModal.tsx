@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { availableColors, buildPurchase, cartUrl, COLOR_DESC } from "@/lib/cafe24";
 import type { CartLine } from "@/lib/calc/types";
-import type { Cafe24Map } from "@/lib/products";
+import type { Addon, Cafe24Map } from "@/lib/products";
 import { useScrollLock } from "./useScrollLock";
 
 const won = (n: number) => `₩${n.toLocaleString("ko-KR")}`;
@@ -12,10 +12,13 @@ const won = (n: number) => `₩${n.toLocaleString("ko-KR")}`;
 export default function PurchaseModal({
   lines,
   map,
+  addons = [],
   onClose,
 }: {
   lines: CartLine[];
   map: Cafe24Map;
+  /** 함께 담을 수 있는 추가 품목 (양방향 연결잭 등), 수량은 여기서 고른다 */
+  addons?: Addon[];
   onClose: () => void;
 }) {
   useScrollLock(true);
@@ -23,7 +26,12 @@ export default function PurchaseModal({
   const [color, setColor] = useState<string | null>(colors.length === 1 ? colors[0] : null);
   const [moving, setMoving] = useState(false);
   const needColor = colors.length > 0 && !color;
-  const { items, missing, payload } = buildPurchase(lines, map, color);
+  const [addonQty, setAddonQty] = useState<Record<string, number>>({});
+  const setQty = (sku: string, q: number) => setAddonQty((s) => ({ ...s, [sku]: Math.max(0, Math.min(99, q)) }));
+  const addonLines: CartLine[] = addons
+    .filter((a) => (addonQty[a.sku] ?? 0) > 0)
+    .map((a) => ({ sku: a.sku, name: a.name, quantity: addonQty[a.sku], unitPrice: a.unitPrice }));
+  const { items, missing, payload } = buildPurchase([...lines, ...addonLines], map, color);
   const total = items.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
 
   useEffect(() => {
@@ -80,6 +88,36 @@ export default function PurchaseModal({
                 ))}
               </div>
               <p className="purchase-hint">선택한 색온도가 조명 품목 전체에 적용됩니다. 부속품·SMPS는 그대로 담깁니다.</p>
+            </section>
+          )}
+
+          {addons.length > 0 && (
+            <section className="purchase-block">
+              <h4>
+                양방향 연결잭 <span className="purchase-optional">(선택)</span>
+              </h4>
+              <div className="addon-list">
+                {addons.map((a) => {
+                  const q = addonQty[a.sku] ?? 0;
+                  return (
+                    <div className="addon-row" key={a.sku}>
+                      <div>
+                        <div className="addon-name">{a.name}</div>
+                        <div className="addon-price">{won(a.unitPrice)}</div>
+                      </div>
+                      <div className="stepper">
+                        <button type="button" aria-label={`${a.name} 빼기`} disabled={q === 0} onClick={() => setQty(a.sku, q - 1)}>
+                          −
+                        </button>
+                        <span aria-live="polite">{q}</span>
+                        <button type="button" aria-label={`${a.name} 더하기`} onClick={() => setQty(a.sku, q + 1)}>
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </section>
           )}
 
