@@ -38,27 +38,27 @@ export type Counts = Record<string, number>;
 /** 타입별 입력 변과 여유치수 범위 */
 export const INSTALL_TYPES: Record<
   InstallType,
-  { sides: { id: string; label: string; title: string }[]; minRem: number; maxRem: number }
+  { sides: { id: string; label: string }[]; minRem: number; maxRem: number }
 > = {
   straight: {
-    sides: [{ id: "STRAIGHT", label: "A", title: "일자 조합 리스트" }],
+    sides: [{ id: "STRAIGHT", label: "A" }],
     minRem: 50,
     maxRem: 100,
   },
   L: {
     sides: [
-      { id: "A", label: "A", title: "A 조합 리스트" },
-      { id: "B", label: "B", title: "B 조합 리스트" },
+      { id: "A", label: "A" },
+      { id: "B", label: "B" },
     ],
     minRem: 50,
     maxRem: 100,
   },
   square: {
     sides: [
-      { id: "S1", label: "A", title: "A 조합 리스트" },
-      { id: "S2", label: "B", title: "B 조합 리스트" },
-      { id: "S3", label: "C", title: "C 조합 리스트" },
-      { id: "S4", label: "D", title: "D 조합 리스트" },
+      { id: "S1", label: "A" },
+      { id: "S2", label: "B" },
+      { id: "S3", label: "C" },
+      { id: "S4", label: "D" },
     ],
     minRem: 50,
     maxRem: 120,
@@ -177,9 +177,32 @@ export function countsToCartLines(product: TubeProduct, counts: Counts): CartLin
     }));
 }
 
-export type CalcResult =
-  | { ok: true; lists: { sideId: string; title: string; combos: Combo[] }[] }
-  | { ok: false; message: string };
+/** 대체 조합 최대 개수 */
+const FALLBACK_LIMIT = 10;
+
+/**
+ * 여유치수 minRem~maxRem 범위 조합이 없을 때 보여줄 대체 조합.
+ * 1) maxRem 초과 조합을 maxRem(100mm)에 가까운 순으로 먼저
+ * 2) 그다음 minRem 미만 조합을 minRem(50mm)에 가까운 순으로 (꽉 끼는 조합은 다른 선택지가 없을 때만)
+ * 같은 여유치수는 최저가 하나만. 등기구가 하나도 안 들어가는 길이면 빈 배열.
+ */
+export function fallbackCombos(product: TubeProduct, space: number, minRem: number, maxRem: number): Combo[] {
+  const all = generateCombos(product, space, 0, space).filter((c) => c.combo.length > 0);
+  const above = all.filter((c) => c.remaining > maxRem).sort((a, b) => a.remaining - b.remaining || a.cost - b.cost);
+  const below = all.filter((c) => c.remaining < minRem).sort((a, b) => b.remaining - a.remaining || a.cost - b.cost);
+  return [...above, ...below].slice(0, FALLBACK_LIMIT);
+}
+
+export type ComboList = {
+  sideId: string;
+  /** 입력 길이 기준 제목 (예: "1440mm 조합 리스트") */
+  title: string;
+  combos: Combo[];
+  /** true 면 범위 내 조합이 없어 대체 조합을 보여주는 중 */
+  fallback: boolean;
+};
+
+export type CalcResult = { ok: true; lists: ComboList[] } | { ok: false; message: string };
 
 /** 원본 onCalculate()의 검증 + 조합 생성 부분 */
 export function calculate(
@@ -202,21 +225,24 @@ export function calculate(
     return { ok: false, message };
   }
 
-  const lists = def.sides.map((side, i) => ({
-    sideId: side.id,
-    title: side.title,
-    combos: generateCombos(product, lengths[i] as number, def.minRem, def.maxRem),
-  }));
+  const lists: ComboList[] = def.sides.map((side, i) => {
+    const space = lengths[i] as number;
+    const title = `${space}mm 조합 리스트`;
+    const combos = generateCombos(product, space, def.minRem, def.maxRem);
+    // 범위(50~100mm 등) 내 조합이 없으면 오류 대신 가장 가까운 조합을 보여준다
+    return combos.length
+      ? { sideId: side.id, title, combos, fallback: false }
+      : { sideId: side.id, title, combos: fallbackCombos(product, space, def.minRem, def.maxRem), fallback: true };
+  });
 
   if (lists.some((l) => !l.combos.length)) {
+    // 가장 짧은 등기구도 들어가지 않는 길이
+    const shortest = Math.min(...product.sizes.map((s) => s.length));
     const message =
       type === "straight"
-        ? "50~100mm 사이로 남는 조합이 없습니다."
-        : type === "L"
-          ? "50~100mm 사이로 남는 조합이 없는 변이 있습니다."
-          : "50~100mm(또는 설정 범위)로 남는 조합이 없는 변이 있습니다.";
+        ? `설치 가능한 조합이 없습니다. (최소 ${shortest}mm 이상 입력해주세요)`
+        : `설치 가능한 조합이 없는 변이 있습니다. (각 변 최소 ${shortest}mm 이상 입력해주세요)`;
     return { ok: false, message };
   }
   return { ok: true, lists };
 }
-

@@ -18,18 +18,19 @@ export type LineCounts = Record<Denom, number>;
 export const PRICES: Record<Spec, { line: Record<Denom, number>; cover: Record<CoverSize, number> }> = {
   40: {
     line: { 100: 4400, 200: 5900, 300: 7200, 400: 8300, 500: 9600, 1000: 14000 },
-    cover: { 5: 27500, 10: 55000, 15: 74500, 20: 80000 },
+    cover: { 5: 27500, 10: 55000, 20: 80000 },
   },
   60: {
-    line: { 100: 4800, 200: 7200, 300: 8700, 400: 11000, 500: 13200, 1000: 17200 },
-    cover: { 5: 32500, 10: 65000, 15: 92500, 20: 100000 },
+    line: { 100: 5800, 200: 8200, 300: 9700, 400: 12000, 500: 14200, 1000: 18200 },
+    cover: { 5: 32500, 10: 65000, 20: 100000 },
   },
 };
-export type CoverSize = 5 | 10 | 15 | 20;
+/** 커버 규격 (m). 15m 재단은 판매 중단 → 11m 이상 남으면 20m 1롤 */
+export type CoverSize = 5 | 10 | 20;
 
 // 공통 부속품
 export const BRACKET_SET_PRICE = 2000; // 라인조명 1개당 1세트
-export const SIDE_CAP_SET_PRICE = 1000; // 일자 견적은 무조건 1세트
+export const SIDE_CAP_SET_PRICE: Record<Spec, number> = { 40: 1000, 60: 1600 }; // 일자 견적은 무조건 1세트 (규격별 상품)
 
 // 전원선
 export const WIRE_PRICES = {
@@ -50,10 +51,36 @@ export const WATTS: Record<Spec, Record<Denom, number>> = {
 };
 
 // 기역자형 가격/치수
-export const L_CORNER_LINE_PRICE = 10000; // 규격 40/60 동일
+export const L_CORNER_LINE_PRICE: Record<Spec, number> = { 40: 10000, 60: 11000 };
 export const L_CORNER_COVER_PRICE: Record<Spec, number> = { 40: 12000, 60: 13000 };
 export const L_CORNER_SIZE: Record<Spec, number> = { 40: 45, 60: 65 }; // mm
 export const L_CORNER_WATT = 1.5; // 기역자형 1개당 소비전력 (W)
+
+/** 단가표. 페이지에서 Supabase(calculator_products) 값으로 덮어써서 넘긴다. */
+export type MlinePrices = {
+  line: Record<Spec, Record<Denom, number>>;
+  cover: Record<Spec, Record<CoverSize, number>>;
+  lCorner: Record<Spec, number>;
+  lCornerCover: Record<Spec, number>;
+  bracket: number;
+  sideCap: Record<Spec, number>;
+  wire1: number;
+  wire10: number;
+  smps: Record<SmpsCap, number>;
+};
+
+/** 코드 기본 단가 (DB 조회 실패 시 사용) */
+export const DEFAULT_PRICES: MlinePrices = {
+  line: { 40: PRICES[40].line, 60: PRICES[60].line },
+  cover: { 40: PRICES[40].cover, 60: PRICES[60].cover },
+  lCorner: L_CORNER_LINE_PRICE,
+  lCornerCover: L_CORNER_COVER_PRICE,
+  bracket: BRACKET_SET_PRICE,
+  sideCap: SIDE_CAP_SET_PRICE,
+  wire1: WIRE_PRICES.wire1,
+  wire10: WIRE_PRICES.wire10,
+  smps: SMPS_PRICES,
+};
 
 export const CONNECTION_LABELS: Record<ConnectionType, string> = {
   serial: "일자연결",
@@ -114,8 +141,8 @@ export function sumWatts(spec: Spec, counts: LineCounts): number {
 }
 
 /** 원본은 Object.keys 순서(오름차순)로 합산 */
-export function linesPrice(spec: Spec, counts: LineCounts): number {
-  const table = PRICES[spec].line;
+export function linesPrice(spec: Spec, counts: LineCounts, prices = DEFAULT_PRICES): number {
+  const table = prices.line[spec];
   let sum = 0;
   ([100, 200, 300, 400, 500, 1000] as const).forEach((mm) => {
     const c = counts[mm] || 0;
@@ -128,8 +155,8 @@ export function linesPrice(spec: Spec, counts: LineCounts): number {
 export type CoverPack = { size: CoverSize; count: number; price: number };
 export type CoverPick = { packs: CoverPack[]; subtotal: number };
 
-export function pickCoverPacks(neededMeters: number, spec: Spec): CoverPick {
-  const coverPrices = PRICES[spec].cover;
+export function pickCoverPacks(neededMeters: number, spec: Spec, prices = DEFAULT_PRICES): CoverPick {
+  const coverPrices = prices.cover[spec];
   const packs: CoverPack[] = [];
   if (neededMeters <= 0) return { packs, subtotal: 0 };
 
@@ -139,12 +166,10 @@ export function pickCoverPacks(neededMeters: number, spec: Spec): CoverPick {
   if (full20 > 0) packs.push({ size: 20, count: full20, price: coverPrices[20] });
 
   if (rem > 0) {
-    let remainderPack: CoverSize = 5;
-    if (rem <= 5) remainderPack = 5;
-    else if (rem <= 10) remainderPack = 10;
-    else if (rem <= 15) remainderPack = 15;
-    else remainderPack = 20;
-    packs.push({ size: remainderPack, count: 1, price: coverPrices[remainderPack] });
+    const remainderPack: CoverSize = rem <= 5 ? 5 : rem <= 10 ? 10 : 20;
+    const same = packs.find((p) => p.size === remainderPack);
+    if (same) same.count += 1; // 20m 롤과 합쳐 한 줄로
+    else packs.push({ size: remainderPack, count: 1, price: coverPrices[remainderPack] });
   }
 
   const subtotal = packs.reduce((s, p) => s + p.count * p.price, 0);
@@ -220,18 +245,21 @@ export function recommendSmpsCombo(totalW: number): SmpsCombo {
   return { items, subtotal, eff: totalEff, cap: totalCap };
 }
 
-export function buildComboFromItems(items: { cap: SmpsCap; count: number }[]): SmpsCombo {
-  const subtotal = items.reduce((s, it) => s + SMPS_PRICES[it.cap] * it.count, 0);
+export function buildComboFromItems(
+  items: { cap: SmpsCap; count: number }[],
+  smpsPrices = DEFAULT_PRICES.smps,
+): SmpsCombo {
+  const subtotal = items.reduce((s, it) => s + smpsPrices[it.cap] * it.count, 0);
   const eff = items.reduce((s, it) => s + Math.round(it.cap * LOAD_LIMIT) * it.count, 0);
   const cap = items.reduce((s, it) => s + it.cap * it.count, 0);
   const normItems = items
-    .map((it) => ({ cap: it.cap, count: it.count, price: SMPS_PRICES[it.cap] }))
+    .map((it) => ({ cap: it.cap, count: it.count, price: smpsPrices[it.cap] }))
     .sort((a, b) => b.cap - a.cap);
   return { items: normItems, subtotal, eff, cap };
 }
 
 /** 원본 renderOutput()의 SMPS 선택 규칙 (단일 → 200W×2 → 300W×n) */
-export function selectSmps(totalWatt: number): SmpsCombo {
+export function selectSmps(totalWatt: number, prices = DEFAULT_PRICES): SmpsCombo {
   const eff60 = Math.round(60 * LOAD_LIMIT);
   const eff100 = Math.round(100 * LOAD_LIMIT);
   const eff200 = Math.round(200 * LOAD_LIMIT);
@@ -243,12 +271,12 @@ export function selectSmps(totalWatt: number): SmpsCombo {
     else if (totalWatt <= eff100) singleCap = 100;
     else if (totalWatt <= eff200) singleCap = 200;
     else singleCap = 300;
-    return buildComboFromItems([{ cap: singleCap, count: 1 }]);
+    return buildComboFromItems([{ cap: singleCap, count: 1 }], prices.smps);
   } else if (totalWatt <= eff200 * 2) {
-    return buildComboFromItems([{ cap: 200, count: 2 }]);
+    return buildComboFromItems([{ cap: 200, count: 2 }], prices.smps);
   }
   const n300 = Math.max(2, Math.ceil(totalWatt / eff300));
-  return buildComboFromItems([{ cap: 300, count: n300 }]);
+  return buildComboFromItems([{ cap: 300, count: n300 }], prices.smps);
 }
 
 /** SMPS 카드 표시용 데이터 (원본 renderSmpsCombo) */
@@ -297,22 +325,22 @@ export type WirePick = {
 };
 
 /** 전원선 혼합형 계산 */
-export function calcWireMixed(pieces: number): WirePick {
+export function calcWireMixed(pieces: number, prices = DEFAULT_PRICES): WirePick {
   if (pieces <= 0) return { label: "전원선 혼합형", countStr: "없음", cost: 0, wire1: 0, wire10: 0 };
   if (pieces < 5) {
     return {
       label: "전원선 1구(2m)",
       countStr: `${fmt(pieces)}개`,
-      cost: pieces * WIRE_PRICES.wire1,
+      cost: pieces * prices.wire1,
       wire1: pieces,
       wire10: 0,
     };
   }
   if (pieces <= 10) {
-    return { label: "전원선 10구(10.5m)", countStr: "1개", cost: WIRE_PRICES.wire10, wire1: 0, wire10: 1 };
+    return { label: "전원선 10구(10.5m)", countStr: "1개", cost: prices.wire10, wire1: 0, wire10: 1 };
   }
   if (pieces <= 14) {
-    const cost = WIRE_PRICES.wire10 + (pieces - 10) * WIRE_PRICES.wire1;
+    const cost = prices.wire10 + (pieces - 10) * prices.wire1;
     return {
       label: "전원선 혼합형(10구+낱개)",
       countStr: `10구 1개 + 1구 ${fmt(pieces - 10)}개`,
@@ -323,18 +351,18 @@ export function calcWireMixed(pieces: number): WirePick {
   }
   const full10 = Math.floor(pieces / 10);
   const rem = pieces % 10;
-  const cost = full10 * WIRE_PRICES.wire10 + (rem > 0 ? rem * WIRE_PRICES.wire1 : 0);
+  const cost = full10 * prices.wire10 + (rem > 0 ? rem * prices.wire1 : 0);
   const label = rem > 0 ? "전원선 혼합형(10구+낱개)" : "전원선 10구(10.5m)";
   const countStr = rem > 0 ? `10구 ${fmt(full10)}개 + 1구 ${fmt(rem)}개` : `10구 ${fmt(full10)}개`;
   return { label, countStr, cost, wire1: rem, wire10: full10 };
 }
 
-export function pickWire(wireType: WireType, pieces: number): WirePick {
+export function pickWire(wireType: WireType, pieces: number, prices = DEFAULT_PRICES): WirePick {
   if (wireType === "wire1") {
     return {
       label: "전원선 1구(2m)",
       countStr: `${fmt(pieces)}개`,
-      cost: pieces * WIRE_PRICES.wire1,
+      cost: pieces * prices.wire1,
       wire1: pieces,
       wire10: 0,
     };
@@ -344,12 +372,12 @@ export function pickWire(wireType: WireType, pieces: number): WirePick {
     return {
       label: "전원선 10구(10.5m)",
       countStr: `${fmt(packs)}개`,
-      cost: packs * WIRE_PRICES.wire10,
+      cost: packs * prices.wire10,
       wire1: 0,
       wire10: packs,
     };
   }
-  return calcWireMixed(pieces);
+  return calcWireMixed(pieces, prices);
 }
 
 // ===== 계산 =====
@@ -406,7 +434,7 @@ export type MlineCalcResult =
 const parseLen = (v: string | undefined) => (v ? parseInt(v, 10) : NaN);
 
 /** 원본 doCalculate() + renderOutput()의 계산 부분 */
-export function calculate(input: MlineInputs): MlineCalcResult {
+export function calculate(input: MlineInputs, prices = DEFAULT_PRICES): MlineCalcResult {
   const { connectionType, spec, wireType } = input;
   if (!connectionType) return { ok: false, message: "먼저 연결 방식을 선택해주세요." };
   if (!spec) return { ok: false, message: "먼저 규격(40/60)을 선택해주세요." };
@@ -428,7 +456,7 @@ export function calculate(input: MlineInputs): MlineCalcResult {
     const c = decomposeLengthMM(L);
     if (!c) return { ok: false, message: "분해에 실패했습니다. 다른 길이로 시도해주세요." };
     counts = c;
-    linesSubtotal = linesPrice(spec, counts);
+    linesSubtotal = linesPrice(spec, counts, prices);
     pieces = countPieces(counts);
     sideCapSets = 1;
     neededMeters = Math.ceil(L / 1000);
@@ -452,7 +480,7 @@ export function calculate(input: MlineInputs): MlineCalcResult {
     if (connectionType === "parallel") {
       // === ㄱ자연결 ===
       lCornerCount = 1;
-      linesSubtotal = linesPrice(spec, counts) + L_CORNER_LINE_PRICE;
+      linesSubtotal = linesPrice(spec, counts, prices) + prices.lCorner[spec];
       pieces = countPieces(countsA) + countPieces(countsB) + 1;
       sideCapSets = 1;
       const totalCoverLen = A + B + 2 * cornerAdd;
@@ -464,7 +492,7 @@ export function calculate(input: MlineInputs): MlineCalcResult {
     } else {
       // === ㅁ자연결: A변 2개 + B변 2개 + 기역자형 4개, 사이드캡 없음 ===
       lCornerCount = 4;
-      linesSubtotal = linesPrice(spec, counts) + L_CORNER_LINE_PRICE * 4;
+      linesSubtotal = linesPrice(spec, counts, prices) + prices.lCorner[spec] * 4;
       pieces = (countPieces(countsA) + countPieces(countsB)) * 2 + 4;
       sideCapSets = 0;
       // 4개 모서리 * 2m = 8m 기본 제공, 나머지만 일반 커버
@@ -477,18 +505,18 @@ export function calculate(input: MlineInputs): MlineCalcResult {
   }
 
   const bracketSets = pieces;
-  const bracketSubtotal = bracketSets * BRACKET_SET_PRICE;
-  const sideCapSubtotal = sideCapSets * SIDE_CAP_SET_PRICE;
-  const lCornerCoverPrice = lCornerCount > 0 ? L_CORNER_COVER_PRICE[spec] || 0 : 0;
-  const coverPick = pickCoverPacks(neededMeters, spec);
-  const wire = pickWire(wireType, pieces);
+  const bracketSubtotal = bracketSets * prices.bracket;
+  const sideCapSubtotal = sideCapSets * prices.sideCap[spec];
+  const lCornerCoverPrice = lCornerCount > 0 ? prices.lCornerCover[spec] || 0 : 0;
+  const coverPick = pickCoverPacks(neededMeters, spec, prices);
+  const wire = pickWire(wireType, pieces, prices);
 
   const linesArr = countsToLines(counts);
   if (lCornerCount > 0) linesArr.unshift(`기역자형 × ${lCornerCount}개`);
 
   // 총 소비전력 (기역자형 포함)
   const totalWatt = sumWatts(spec, counts) + lCornerCount * L_CORNER_WATT;
-  const smpsCombo = selectSmps(totalWatt);
+  const smpsCombo = selectSmps(totalWatt, prices);
   const totalUnits = smpsCombo.items.reduce((s, it) => s + it.count, 0);
   const smpsSubtotal = smpsCombo.subtotal;
 
@@ -541,7 +569,7 @@ export function calculate(input: MlineInputs): MlineCalcResult {
 }
 
 /** 최종 결과 → 장바구니 품목 (합계는 grandTotal과 같다) */
-export function toCartLines(r: MlineResult): CartLine[] {
+export function toCartLines(r: MlineResult, prices = DEFAULT_PRICES): CartLine[] {
   const { spec } = r;
   const lines: CartLine[] = [];
   const push = (sku: string, name: string, quantity: number, unitPrice: number) => {
@@ -552,12 +580,12 @@ export function toCartLines(r: MlineResult): CartLine[] {
     else lines.push({ sku, name, quantity, unitPrice });
   };
 
-  push(`mline-${spec}-corner`, `매립라인조명 ${spec} 기역자형`, r.lCornerCount, L_CORNER_LINE_PRICE);
+  push(`mline-${spec}-corner`, `매립라인조명 ${spec} 기역자형`, r.lCornerCount, prices.lCorner[spec]);
   DENOMS.forEach((mm) =>
-    push(`mline-${spec}-line-${mm}`, `매립라인조명 ${spec} ${mm}mm`, r.counts[mm], PRICES[spec].line[mm]),
+    push(`mline-${spec}-line-${mm}`, `매립라인조명 ${spec} ${mm}mm`, r.counts[mm], prices.line[spec][mm]),
   );
-  push("mline-bracket", "고정브라켓(스프링)[4개입]", r.bracketSets, BRACKET_SET_PRICE);
-  push("mline-sidecap", "사이드캡[2개]", r.sideCapSets, SIDE_CAP_SET_PRICE);
+  push("mline-bracket", "고정브라켓(스프링)[4개입]", r.bracketSets, prices.bracket);
+  push(`mline-${spec}-sidecap`, `매립라인조명 ${spec} 사이드캡[2개]`, r.sideCapSets, prices.sideCap[spec]);
   push(
     `mline-${spec}-corner-cover`,
     `매립라인조명 ${spec} 기역자형 커버 1조(좌, 우 1m)`,
@@ -567,8 +595,8 @@ export function toCartLines(r: MlineResult): CartLine[] {
   r.coverPick.packs.forEach((p) =>
     push(`mline-${spec}-cover-${p.size}m`, `매립라인조명 ${spec} 커버 ${p.size}M`, p.count, p.price),
   );
-  push("mline-wire-10", "전원선 10구(10.5m)", r.wire.wire10, WIRE_PRICES.wire10);
-  push("mline-wire-1", "전원선 1구(2m)", r.wire.wire1, WIRE_PRICES.wire1);
+  push("mline-wire-10", "전원선 10구(10.5m)", r.wire.wire10, prices.wire10);
+  push("mline-wire-1", "전원선 1구(2m)", r.wire.wire1, prices.wire1);
   r.smpsCombo.items.forEach((it) => push(`mline-smps-${it.cap}`, `SMPS ${it.cap}W`, it.count, it.price));
   return lines;
 }

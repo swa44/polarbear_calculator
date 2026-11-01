@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
-import BlockBarCalculator from "@/components/legacy/BlockBarCalculator";
+import BlockBarCalculator from "@/components/calculators/BlockBarCalculator";
 import { asset } from "@/lib/basePath";
 import { bb12 } from "@/lib/calc/bb12";
+import { applyBlockBarPrices, getCafe24Map, getPrices } from "@/lib/products";
 
 export const metadata: Metadata = {
   title: "12V블럭바 자동계산기",
@@ -11,11 +12,17 @@ export const metadata: Metadata = {
   },
 };
 
-export default function Page() {
+export default async function Page() {
+  const [product, cafe24] = await Promise.all([
+    getPrices("12vbb").then((prices) => applyBlockBarPrices(bb12, prices)),
+    getCafe24Map("12vbb"),
+  ]);
+
   return (
     <BlockBarCalculator
       title="블럭바 12V 계산기"
-      product={bb12}
+      product={product}
+      cafe24={cafe24}
       thumbs={{
         mid: asset("/12vbb/thumb_n1.png"),
         cover: asset("/12vbb/thumb_2.png"),

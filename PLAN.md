@@ -3,7 +3,7 @@
 ## 목표
 - 기존 `oox` 정적 계산기 6개를 **Next.js + Vercel + Supabase** 구조로 다시 만든다
 - 계산이 끝나서 품목이 정해지면 **카페24 자사몰 장바구니에 한 번에 담기**까지 연결한다
-- 최종 주소: `폴라베어.kr/calculator/...` (예: `폴라베어.kr/calculator/t5`)
+- 최종 주소: `계산기.폴라베어.kr/...` (예: `계산기.폴라베어.kr/t5`)
 - 기능 이식이 끝난 다음 디자인을 리뉴얼한다
 
 ## 기본 정보
@@ -12,7 +12,7 @@
 | 로컬 경로 | `/Users/scrowna/Desktop/web/polarbear_calculator` |
 | GitHub | https://github.com/swa44/polarbear_calculator |
 | 원본 소스 | `/Users/scrowna/Desktop/web/oox/root` |
-| 배포 | Vercel (`basePath: /calculator`) |
+| 배포 | Vercel, `계산기.폴라베어.kr` (루트 배포) |
 | DB | Supabase |
 | 쇼핑몰 | 카페24 자사몰 |
 
@@ -26,7 +26,7 @@
 
 ## Phase 0. 프로젝트 세팅
 - [x] Next.js 생성 (App Router, TypeScript, Tailwind, ESLint) — Next 16.4
-- [x] `next.config.ts`에 `basePath: '/calculator'` 설정
+- [x] `next.config.ts`에 basePath 설정 → 서브도메인 배포로 바꾸면서 비움 (`lib/basePath.ts`)
 - [x] git init 후 `swa44/polarbear_calculator`에 연결 (첫 push는 아직)
 - [ ] Vercel 프로젝트 연결 (push하면 자동 배포)
 - [ ] Supabase 프로젝트 생성, 환경변수 등록 (`.env.local` + Vercel)
@@ -38,13 +38,13 @@
 ```
 app/
   layout.tsx              공통 레이아웃 (헤더 로고: /logo.png)
-  page.tsx                /calculator          계산기 목록
-  t5/page.tsx             /calculator/t5       남영 T5
-  t5nu/page.tsx           /calculator/t5nu     누빔 T5
-  t3/page.tsx             /calculator/t3       T3
-  12vbb/page.tsx          /calculator/12vbb    12V 블럭바
-  24vbb/page.tsx          /calculator/24vbb    24V 블럭바
-  mline/page.tsx          /calculator/mline    매립 라인조명
+  page.tsx                /                    계산기 목록
+  t5/page.tsx             /t5                 남영 디밍 T5
+  t5nu/page.tsx           /t5nu               누빔 T5
+  t3/page.tsx             /t3                 T3
+  12vbb/page.tsx          /12vbb              12V 블럭바
+  24vbb/page.tsx          /24vbb              24V 블럭바
+  mline/page.tsx          /mline              매립 라인조명
   api/cart/route.ts       장바구니 연동용 서버 API (Phase 4)
 lib/
   calc/                   계산 로직, 순수 함수 (UI와 분리)
@@ -86,66 +86,84 @@ type CartLine = {
 ## Phase 3. Supabase: 품목 ↔ 카페24 상품 매핑
 코드에 하드코딩된 단가를 DB로 옮기고, 각 품목에 카페24 상품 정보를 연결한다.
 
-`products` 테이블 (초안)
+- Supabase 프로젝트: `polarebear_quotation` (회사 관리 DB와 같이 사용, ref `wetigiwdevokobwrcwsv`)
+- **계산기 테이블은 모두 `calculator_` 접두어**를 붙여 기존 `control_*` 등과 구분한다
+- 길이, 소비전력, 계산 규칙은 코드(`lib/calc`)에 두고, **단가와 카페24 매핑만 DB**에 둔다
+
+`calculator_products` 테이블 ([마이그레이션](supabase/migrations/20261031000000_calculator_products.sql))
 | 컬럼 | 설명 |
 |---|---|
-| `sku` (PK) | 내부 품목 코드 |
+| `sku` (PK) | 내부 품목 코드 (`CartLine.sku`와 같음) |
 | `calculator` | 소속 계산기 (`t5`, `mline` ...) |
 | `name` | 품목명 |
-| `spec` | 사이즈, 길이 등 계산용 값 (jsonb) |
 | `price` | 단가 |
 | `cafe24_product_no` | 카페24 상품번호 |
 | `cafe24_variant_code` | 카페24 옵션(품목) 코드 |
-| `active` | 판매 여부 |
+| `memo` | 메모 |
+| `active` | 판매 여부 (Phase 4 장바구니에서 사용) |
+| `sort_order` | 정렬 순서 |
 
-- [ ] 테이블 생성, RLS 설정 (읽기는 공개, 쓰기는 관리자만)
-- [ ] 기존 `app.js`의 단가 데이터를 시드로 입력
+- [x] 테이블 생성, RLS 설정 (읽기는 공개, 쓰기는 secret key만)
+- [x] 코드 단가 83개 시드 입력 ([seed.sql](supabase/seed.sql), [products.csv](supabase/products.csv))
+- [x] 페이지에서 DB 단가 조회 (`lib/products.ts`, `use cache` + `cacheLife("hours")`)
+  - DB 조회 실패나 DB에 없는 sku는 코드 기본 단가 사용
+  - DB에서 단가를 바꾸면 **최대 1시간 뒤** 반영
 - [ ] 카페24 관리자에서 상품번호와 옵션 코드를 확인해서 매핑 입력
-- [ ] 페이지에서는 서버 컴포넌트로 조회하고 revalidate로 캐싱
+- [ ] 계산기마다 같은 실제 상품 정리 (예: 24V SMPS = 매립라인 SMPS, 12V/24V 클립·커버·코너각대)
 
-## Phase 4. 카페24 장바구니 연동 ⚠️ 사전 조사 필요
-계산 결과(`CartLine[]`)를 카페24 장바구니에 한 번에 담는다.
+### SQL 실행 방법
+테이블 생성과 시드는 `supabase db push`가 아니라 `supabase db query --linked -f <파일>`로 실행했다.
+같은 DB를 쓰는 다른 프로젝트의 마이그레이션 기록과 섞이지 않게 하기 위해서다.
 
-### 조사 항목
-- [ ] 카페24 개발자센터 앱 등록 (Client ID / Secret, 필요 권한 범위)
-- [ ] **비회원 장바구니** 담기가 가능한지 (Front API는 고객 인증이 필요할 수 있음)
-- [ ] 여러 상품·옵션을 한 번에 담는 방법
+## Phase 4. 카페24 장바구니 연동 ✅
+계산 결과 → "구매하러 가기" → 색온도 선택 → 자사몰(polarbearmarket.com) 장바구니에 한 번에 담기.
 
-### 후보 방식
-| 방식 | 설명 | 장점 | 단점 |
-|---|---|---|---|
-| A. 카페24 Front API | 서버(`/api/cart`)에서 장바구니 API 호출 | 공식 방식 | 고객 인증·토큰 처리 필요, 비회원 제약 가능성 |
-| B. 자사몰 스킨에 수신 페이지 | 계산기가 품목 목록을 URL 파라미터로 넘기면, 카페24 스킨 안의 스크립트가 장바구니에 담고 장바구니 페이지로 이동 | 비회원 가능, 자사몰 쿠키·세션을 그대로 씀 | 카페24 스킨 수정 필요 |
-| C. 상품별 개별 담기 | 품목마다 상품 페이지 링크 제공 | 구현이 쉬움 | "한 번에 담기" 목표를 못 이룸 (임시 대안) |
+### 구조
+- 카페24 몰 아이디 `polarbearshop`, 앱 Client ID `sOg4Bz7LLBwgiHMvvsHAvC` (앱 권한: 상품 읽기, 개인화정보 읽기+쓰기)
+- 장바구니는 고객의 자사몰 세션에 묶여 있어 계산기 서버가 직접 담을 수 없다
+  → 계산기가 `https://polarbearmarket.com/order/basket.html#pbcart=<base64url [[상품번호, 옵션코드, 수량], ...]>` 로 이동
+  → 자사몰 장바구니 페이지에 넣은 스크립트(`public/cafe24-cart.js`)가 `CAFE24API.addCart` 로 담고 장바구니를 새로 고침
+- 비회원도 담김 (테스트 완료). 한 번에 10개씩 나눠 담음
+- 스크립트 위치: Supabase Storage `calculator-public/cafe24-cart.js` (스킨 `order/basket.html` 맨 끝에 `<script src>` 한 줄)
+  - 스크립트를 고치면 Storage에 다시 올려야 반영됨. Vercel 배포 후 그쪽 주소로 옮겨도 됨
+  - 스킨을 고치지 않는 대안: `scripts/cafe24-script-tag.mjs` (앱 스크립트 등록, Client Secret 필요)
 
-→ 조사 결과를 보고 A 또는 B로 결정. 장바구니는 자사몰 도메인의 세션을 쓰기 때문에 **B가 현실적일 가능성이 높음**
+### 데이터
+- `calculator_cafe24_variants`: 품목(sku) × 색온도 → 카페24 상품번호/옵션 코드/판매가
+- `scripts/sync-cafe24.mjs`: 카페24 옵션·가격을 읽어 위 테이블과 `calculator_products.price`를 갱신
+  - **자사몰에서 가격·옵션을 바꾸면 실행**: `node --env-file=.env.local scripts/sync-cafe24.mjs` (`--dry`로 미리보기)
+  - 계산기 금액 = 자사몰 판매가 (사이트 반영은 최대 1시간 뒤)
+- 사이드캡은 규격별 상품이라 `mline-40-sidecap`(1,000원) / `mline-60-sidecap`(1,600원)으로 분리
 
-### 공통 작업
-- [ ] 결과 화면에 "장바구니 담기" 버튼과 담길 품목 미리보기
-- [ ] 매핑 안 된 품목이나 품절 품목 처리 (안내 문구)
-- [ ] 담기 실패 시 안내와 재시도
+### 남은 것
+- [ ] Vercel 배포 후 실제 주소에서 한 번 더 확인
+- [ ] 자사몰 상품을 새로 추가·삭제하면 `sync-cafe24.mjs`의 연결 규칙(상품번호) 수정 필요
 
 ## Phase 5. 도메인 / 배포
-목표 주소: `폴라베어.kr/calculator` (퓨니코드: `xn--` 형식으로 변환된 주소로 DNS 설정)
+최종 주소: **`계산기.폴라베어.kr`** (퓨니코드 `xn--989a00a691b.xn--oi2bn1hh5i3lp.kr`), 루트에 배포 (`BASE_PATH` 비움)
+- 예: `계산기.폴라베어.kr/t5`, `계산기.폴라베어.kr/mline`
+- DNS: Cloudflare에서 `계산기` CNAME → Vercel 연결 완료 (프록시 끔, DNS only)
 
-> ⚠️ **확인 필요**: `폴라베어.kr`이 카페24 자사몰 도메인이라면 Vercel이 하위 경로(`/calculator`)만 따로 가져갈 수 없음.
-> 그럴 경우 아래 중에서 선택:
-> - **서브도메인**: `calc.폴라베어.kr` → Vercel (가장 간단)
-> - **리버스 프록시**: 메인 도메인을 Vercel로 두고 `/calculator` 외 경로는 카페24로 rewrite (복잡하고 카페24 쪽 제약이 있음)
-> - 메인 도메인이 카페24가 아니라면 Vercel에 그대로 연결하면 됨
->
-> 장바구니 방식 B를 쓰면 계산기 도메인이 달라도 문제없음
+Vercel 환경변수 (공개용 값만)
+| 변수 | 값 |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase 프로젝트 URL |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | publishable key |
+| `NEXT_PUBLIC_CAFE24_CLIENT_ID` | 카페24 앱 Client ID |
+| `NEXT_PUBLIC_CAFE24_MALL_URL` | `https://polarbearmarket.com` |
 
-- [ ] 도메인 구조 확정
-- [ ] Vercel 프리뷰 URL에서 6개 계산기 + 장바구니 연동 전체 점검
-- [ ] 도메인 연결
+- [x] 도메인 구조 확정, DNS 연결
+- [ ] GitHub push → Vercel 배포, 도메인 추가
+- [ ] 배포 주소에서 6개 계산기 + 장바구니 연동 점검
 - [ ] 기존 oox 사이트 처리 (새 주소로 리다이렉트할지, 그대로 둘지)
 
 ## Phase 6. 디자인 리뉴얼
-- [ ] 디자인 방향 결정 (자사몰 톤과 맞추기)
-- [ ] 색상, 타이포, 공통 컴포넌트 정의
-- [ ] 계산기 페이지와 결과·장바구니 화면에 적용
-- [ ] 모바일 우선으로 점검
+- [x] 1차 리뉴얼: 폴라베어 로고 톤의 흑백 모노톤, Pretendard 폰트
+- [x] 디자인 토큰과 공통 클래스를 `app/globals.css` 하나로 통합 (기존 legacy CSS 3개 삭제)
+- [x] 공통 헤더(로고)·푸터, 홈 계산기 목록(그룹별 카드), 6개 계산기 화면 적용
+- [x] 모바일(390px)·데스크톱 화면 점검, 리뉴얼 후 원본과 결과 비교 69건 일치
+- [ ] 자사몰 톤과 최종 맞추기 (자사몰 디자인 확정 후)
+- [ ] 장바구니 담기 화면 (Phase 4와 함께)
 
 ---
 

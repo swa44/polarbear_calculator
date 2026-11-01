@@ -32,6 +32,6 @@ export const bb12: BlockBarProduct = {
   warnLength: 3000,
   warnParallel: true,
   alwaysShowClipLines: false,
-  // 원본 오타 그대로 유지 (하단 요약에만 "고정클림"으로 표기됨)
-  summaryClipLabel: "고정클림",
+  // 원본은 하단 요약에만 오타 "고정클림"으로 표기됨 → 리뉴얼하면서 수정
+  summaryClipLabel: "고정클립",
 };
