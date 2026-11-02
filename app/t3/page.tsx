@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import TubeCalculator from "@/components/calculators/TubeCalculator";
 import { asset } from "@/lib/basePath";
 import { t3 } from "@/lib/calc/t3";
-import { applyTubePrices, getCafe24Map, getPrices } from "@/lib/products";
+import { addonsFrom, applyTubePrices, getCafe24Map, getPrices, SENSOR_GROUP, tubeAddonDefs } from "@/lib/products";
 
 export const metadata: Metadata = {
   title: "T3 자동계산기",
@@ -10,16 +10,18 @@ export const metadata: Metadata = {
 };
 
 export default async function Page() {
-  const [product, cafe24] = await Promise.all([
-    getPrices("t3").then((prices) => applyTubePrices(t3, prices)),
-    getCafe24Map("t3"),
-  ]);
+  const [prices, cafe24] = await Promise.all([getPrices("t3"), getCafe24Map("t3")]);
+  const product = applyTubePrices(t3, prices);
 
   return (
     <TubeCalculator
       title="T3 자동계산기"
       product={product}
       cafe24={cafe24}
+      addons={addonsFrom(prices, [
+        ...tubeAddonDefs("t3"),
+        { sku: "t3-sensor-mw", name: "마이크로파센서", group: SENSOR_GROUP },
+      ])}
       intro={{ kind: "image", src: asset("/t3/t3main.webp"), alt: "T3 설명 이미지" }}
     />
   );

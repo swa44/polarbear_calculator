@@ -18,7 +18,7 @@ export default function PurchaseModal({
 }: {
   lines: CartLine[];
   map: Cafe24Map;
-  /** 함께 담을 수 있는 추가 품목 (양방향 연결잭 등), 수량은 여기서 고른다 */
+  /** 함께 담을 수 있는 부속 (양방향 연결잭·전원코드 등), group 별로 묶어 보여주고 수량은 여기서 고른다 */
   addons?: Addon[];
   /** 제품별 색온도 설명 (예: T5·T3·매립라인 주광색 6500K) */
   colorDesc?: Record<string, string>;
@@ -36,6 +36,7 @@ export default function PurchaseModal({
     .map((a) => ({ sku: a.sku, name: a.name, quantity: addonQty[a.sku], unitPrice: a.unitPrice }));
   const { items, missing, payload } = buildPurchase([...lines, ...addonLines], map, color);
   const total = items.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
+  const addonGroups = [...new Set(addons.map((a) => a.group))];
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -94,13 +95,13 @@ export default function PurchaseModal({
             </section>
           )}
 
-          {addons.length > 0 && (
-            <section className="purchase-block">
+          {addonGroups.map((group) => (
+            <section className="purchase-block" key={group}>
               <h4>
-                양방향 연결잭 <span className="purchase-optional">(선택)</span>
+                {group} <span className="purchase-optional">(선택)</span>
               </h4>
               <div className="addon-list">
-                {addons.map((a) => {
+                {addons.filter((a) => a.group === group).map((a) => {
                   const q = addonQty[a.sku] ?? 0;
                   return (
                     <div className={`addon-row ${q > 0 ? "active" : ""}`} key={a.sku}>
@@ -122,7 +123,7 @@ export default function PurchaseModal({
                 })}
               </div>
             </section>
-          )}
+          ))}
 
           <section className="purchase-block">
             <h4>담길 품목</h4>

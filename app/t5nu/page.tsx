@@ -2,13 +2,7 @@ import type { Metadata } from "next";
 import TubeCalculator from "@/components/calculators/TubeCalculator";
 import { asset } from "@/lib/basePath";
 import { t5nu } from "@/lib/calc/t5nu";
-import { addonsFrom, applyTubePrices, getCafe24Map, getPrices } from "@/lib/products";
-
-const JACKS = [
-  { sku: "t5-nubim-jack-30", name: "양방향 연결잭 30cm" },
-  { sku: "t5-nubim-jack-60", name: "양방향 연결잭 60cm" },
-  { sku: "t5-nubim-jack-120", name: "양방향 연결잭 1.2M" },
-];
+import { addonsFrom, applyTubePrices, getCafe24Map, getPrices, SENSOR_GROUP, tubeAddonDefs } from "@/lib/products";
 
 export const metadata: Metadata = {
   title: "누빔 T5 자동계산기",
@@ -24,7 +18,11 @@ export default async function Page() {
       title="누빔T5 자동계산기"
       product={product}
       cafe24={cafe24}
-      addons={addonsFrom(prices, JACKS)}
+      addons={addonsFrom(prices, [
+        ...tubeAddonDefs("t5-nubim"),
+        { sku: "t5-nubim-switch", name: "전원스위치", group: SENSOR_GROUP },
+        { sku: "t5-nubim-sensor", name: "동작감지센서", group: SENSOR_GROUP },
+      ])}
       intro={{ kind: "image", src: asset("/t5nu/t5numain.webp"), alt: "누빔 T5 설명 이미지" }}
     />
   );

@@ -54,7 +54,7 @@ function colorOf(label) {
 }
 
 // 계산기 sku → 카페24 상품번호 + 옵션명 조건
-const PRODUCTS = { namyoungT5: 259, namyoungT5Acc: 291, nubimT5: 251, nubimT5Acc: 293, t3: 254, bar12: 116, acc12: 184, smps12: 118, bar24: 167, acc24: 117, smps24: 185, mline: 120, mlineAcc: 121 };
+const PRODUCTS = { namyoungT5: 259, namyoungT5Acc: 291, nubimT5: 251, nubimT5Acc: 293, t3: 254, t3Acc: 295, bar12: 116, acc12: 184, smps12: 118, bar24: 167, acc24: 117, smps24: 185, mline: 120, mlineAcc: 121 };
 const ACC = {
   "clip-screw": (s) => s.includes("고정클립(피스형)"),
   "clip-tape": (s) => s.includes("고정클립(양면테이프형)"),
@@ -67,9 +67,18 @@ function rule(sku) {
   let m;
   // 양방향 연결잭 (구매 확인창 추가 품목)
   const JACK = { 30: "30cm", 60: "60cm", 120: "1.2M" };
-  if ((m = sku.match(/^t5-namyoung-jack-(\d+)$/))) return [PRODUCTS.namyoungT5Acc, (s) => s === `양방향연결잭 ${JACK[m[1]]}`];
-  if ((m = sku.match(/^t5-nubim-jack-(\d+)$/))) return [PRODUCTS.nubimT5Acc, (s) => s === `양방향연결잭 ${JACK[m[1]]}`];
-  if ((m = sku.match(/^t5-namyoung-(\d+)$/))) return [PRODUCTS.namyoungT5, (s) => s.includes(` ${m[1]}mm `) && !s.includes("코드")];
+  const ACC_PRODUCT = { "t5-namyoung": PRODUCTS.namyoungT5Acc, "t5-nubim": PRODUCTS.nubimT5Acc, t3: PRODUCTS.t3Acc };
+  if ((m = sku.match(/^(t5-namyoung|t5-nubim|t3)-jack-(\d+)$/))) return [ACC_PRODUCT[m[1]], (s) => s === `양방향연결잭 ${JACK[m[2]]}`];
+  // 센서·스위치
+  if (sku === "t3-sensor-mw") return [PRODUCTS.t3Acc, (s) => s === "누빔T3 호환 마이크로파센서"];
+  if (sku === "t5-nubim-switch") return [PRODUCTS.nubimT5Acc, (s) => s === "누빔T5 호환 전원스위치"];
+  if (sku === "t5-nubim-sensor") return [PRODUCTS.nubimT5Acc, (s) => s === "누빔T5 호환 동작감지센서"];
+  // 전원코드 (누빔 T5·T3만, 남영 디밍은 없음)
+  if ((m = sku.match(/^(t5-nubim|t3)-cord-(150|300)(-sw)?$/))) {
+    const label = `전원코드 ${m[2] === "150" ? "1.5M" : "3M"}${m[3] ? "(중간스위치)" : ""}`;
+    return [ACC_PRODUCT[m[1]], (s) => s === label];
+  }
+  if ((m = sku.match(/^t5-namyoung-(\d+)$/))) return [PRODUCTS.namyoungT5, (s) => s.startsWith(`${m[1]}mm `)];
   if ((m = sku.match(/^t5-nubim-(\d+)$/))) return [PRODUCTS.nubimT5, (s) => s.startsWith(`${m[1]}mm `)];
   if ((m = sku.match(/^t3-(\d+)$/))) return [PRODUCTS.t3, (s) => s.startsWith(`${m[1]}mm `)];
   for (const [pre, bar, acc, smps] of [["bb12", PRODUCTS.bar12, PRODUCTS.acc12, PRODUCTS.smps12], ["bb24", PRODUCTS.bar24, PRODUCTS.acc24, PRODUCTS.smps24]]) {

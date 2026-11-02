@@ -71,10 +71,33 @@ export async function getCafe24Map(calculator: string): Promise<Cafe24Map> {
 }
 
 /** 구매 확인창에서 고르는 추가 품목 (예: 양방향 연결잭) */
-export type Addon = { sku: string; name: string; unitPrice: number };
+export type AddonDef = { sku: string; name: string; group: string };
+export type Addon = AddonDef & { unitPrice: number };
+
+/** T5·T3 구매 확인창에서 고르는 부속 (sku 접두사: t5-namyoung, t5-nubim, t3). 남영 디밍은 전원코드 없이 */
+export function tubeAddonDefs(prefix: string, { cords = true } = {}): AddonDef[] {
+  const jack = "양방향 연결잭";
+  const cord = "전원코드";
+  const jacks: AddonDef[] = [
+    { sku: `${prefix}-jack-30`, name: "양방향 연결잭 30cm", group: jack },
+    { sku: `${prefix}-jack-60`, name: "양방향 연결잭 60cm", group: jack },
+    { sku: `${prefix}-jack-120`, name: "양방향 연결잭 1.2M", group: jack },
+  ];
+  if (!cords) return jacks;
+  return [
+    ...jacks,
+    { sku: `${prefix}-cord-150`, name: "전원코드 1.5M", group: cord },
+    { sku: `${prefix}-cord-300`, name: "전원코드 3M", group: cord },
+    { sku: `${prefix}-cord-150-sw`, name: "전원코드 1.5M (중간스위치)", group: cord },
+    { sku: `${prefix}-cord-300-sw`, name: "전원코드 3M (중간스위치)", group: cord },
+  ];
+}
+
+/** 제품별 센서·스위치 */
+export const SENSOR_GROUP = "센서·스위치";
 
 /** DB 단가가 있는(0원 초과) 추가 품목만 */
-export function addonsFrom(prices: PriceMap, defs: { sku: string; name: string }[]): Addon[] {
+export function addonsFrom(prices: PriceMap, defs: AddonDef[]): Addon[] {
   return defs.filter((d) => (prices[d.sku] ?? 0) > 0).map((d) => ({ ...d, unitPrice: prices[d.sku] }));
 }
 

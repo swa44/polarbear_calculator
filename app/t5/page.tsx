@@ -2,13 +2,7 @@ import type { Metadata } from "next";
 import TubeCalculator from "@/components/calculators/TubeCalculator";
 import { asset } from "@/lib/basePath";
 import { t5 } from "@/lib/calc/t5";
-import { addonsFrom, applyTubePrices, getCafe24Map, getPrices } from "@/lib/products";
-
-const JACKS = [
-  { sku: "t5-namyoung-jack-30", name: "양방향 연결잭 30cm" },
-  { sku: "t5-namyoung-jack-60", name: "양방향 연결잭 60cm" },
-  { sku: "t5-namyoung-jack-120", name: "양방향 연결잭 1.2M" },
-];
+import { addonsFrom, applyTubePrices, getCafe24Map, getPrices, tubeAddonDefs } from "@/lib/products";
 
 export const metadata: Metadata = {
   title: "남영 디밍 T5 자동계산기",
@@ -24,7 +18,7 @@ export default async function Page() {
       title="남영 디밍T5 자동계산기"
       product={product}
       cafe24={cafe24}
-      addons={addonsFrom(prices, JACKS)}
+      addons={addonsFrom(prices, tubeAddonDefs("t5-namyoung", { cords: false }))}
       intro={{ kind: "image", src: asset("/t5/t5nammain.webp"), alt: "남영 디밍 T5 설명 이미지" }}
     />
   );
